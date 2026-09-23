@@ -31,7 +31,7 @@ export type ParseQRResult =
 export function parseQRPayload(raw: string): ParseQRResult {
   let parsed: any;
   try {
-    parsed = JSON.parse(raw);
+    parsed = JSON.parse(raw.trim());
   } catch {
     return { ok: false, message: 'Invalid QR code.' };
   }

@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "QR Attendance App",
-    "slug": "qrattendance",
+    "slug": "qrapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "qrattendanceapp",
@@ -46,7 +46,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "7a977500-dfc6-4eab-b1f6-890e013b771c"
+        "projectId": "24083336-df10-4559-8b76-5911f1ba3f9f"
       }
     }
   }
