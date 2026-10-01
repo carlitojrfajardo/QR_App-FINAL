@@ -236,11 +236,21 @@ export default function TeacherScreen() {
 
       {payload && (
         <View style={styles.qrCard}>
-          {/* White quiet-zone box — mas dali ma-scan sa camera kung puti ang palibot sa QR */}
+          {/* White quiet-zone box — mas dali ma-scan sa camera kung puti ang palibot sa QR.
+              Compact payload + ecl="L" + dako nga size = pinakapaspas ma-scan. */}
           <View style={styles.qrBox}>
-            <QRCode value={payload} size={220} color="#000000" backgroundColor="#FFFFFF" />
+            <QRCode
+              value={payload}
+              size={260}
+              ecl="L"
+              color="#000000"
+              backgroundColor="#FFFFFF"
+            />
           </View>
           <Text style={styles.eventCodeText}>{eventId.trim()}</Text>
+          <Text style={styles.scanHint}>
+            Itutok lang ang phone sa student — dali ra ni ma-scan
+          </Text>
           <Text style={styles.payloadText}>{payload}</Text>
         </View>
       )}
@@ -327,16 +337,22 @@ const styles = StyleSheet.create({
   },
   qrBox: {
     backgroundColor: '#FFFFFF',
-    padding: 16,
+    padding: 20,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   eventCodeText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: COLORS.textPrimary,
-    letterSpacing: 1,
+    letterSpacing: 2,
+  },
+  scanHint: {
+    fontSize: 13,
+    color: COLORS.success,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   payloadText: {
     fontSize: 11,

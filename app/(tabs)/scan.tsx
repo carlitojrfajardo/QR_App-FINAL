@@ -87,13 +87,9 @@ export default function ScanScreen() {
         barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
         onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
       />
-      {/* Viewfinder frame — itutok ang QR sa sulod sa box */}
       {!scanned && (
         <View style={styles.frameWrap} pointerEvents="none">
           <View style={styles.frame} />
-          <Text style={styles.frameText}>
-            Itutok ang QR sa sulod sa box
-          </Text>
         </View>
       )}
       <View style={styles.overlay}>
@@ -118,14 +114,10 @@ export default function ScanScreen() {
           </View>
         ) : (
           <View style={styles.card}>
-            <Text style={styles.hint}>Point the camera at an event QR code</Text>
-            <Text style={styles.or}>— o kung dili ma-scan —</Text>
             <TextInput
               style={styles.input}
               value={manualCode}
               onChangeText={setManualCode}
-              placeholder="I-type ang event code"
-              placeholderTextColor={COLORS.textSecondary}
               autoCapitalize="characters"
             />
             <AppButton
@@ -157,23 +149,14 @@ const styles = StyleSheet.create({
     bottom: 160,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
   },
   frame: {
-    width: 230,
-    height: 230,
+    width: 260,
+    height: 260,
     borderWidth: 3,
     borderColor: COLORS.primary,
     borderRadius: 16,
     backgroundColor: 'transparent',
-  },
-  frameText: {
-    fontSize: 13,
-    color: '#FFFFFF',
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
   },
   overlay: {
     position: 'absolute',
@@ -206,16 +189,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.textSecondary,
     marginBottom: 8,
-  },
-  hint: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-  },
-  or: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
   },
   input: {
     backgroundColor: COLORS.background,

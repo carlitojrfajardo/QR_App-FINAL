@@ -48,13 +48,16 @@ export async function registerAttendance(
   const payload = parsed.payload;
 
   const now = Date.now();
-  const start = payload.start ? new Date(payload.start).getTime() : null;
-  const end = payload.end ? new Date(payload.end).getTime() : null;
+  // 1) Time window gikan sa QR payload (para sa daan nga full QRs)
+  const payloadStart = payload.start
+    ? new Date(payload.start).getTime()
+    : null;
+  const payloadEnd = payload.end ? new Date(payload.end).getTime() : null;
 
-  if (start && now < start) {
+  if (payloadStart && now < payloadStart) {
     return { success: false, message: 'Event has not started yet.' };
   }
-  if (end && now > end) {
+  if (payloadEnd && now > payloadEnd) {
     return { success: false, message: 'Event has already ended.' };
   }
 
@@ -64,6 +67,20 @@ export async function registerAttendance(
   const foundEvent = await getEventByCode(payload.event);
   if (foundEvent) {
     event = foundEvent;
+    // 2) Time window gikan sa CLOUD event (para sa bag-ong compact QR
+    // nga walay start/end sa payload — ang oras kuhaon sa database).
+    const cloudStart = foundEvent.start_time
+      ? new Date(foundEvent.start_time).getTime()
+      : null;
+    const cloudEnd = foundEvent.end_time
+      ? new Date(foundEvent.end_time).getTime()
+      : null;
+    if (cloudStart && now < cloudStart) {
+      return { success: false, message: 'Event has not started yet.' };
+    }
+    if (cloudEnd && now > cloudEnd) {
+      return { success: false, message: 'Event has already ended.' };
+    }
   } else {
     const { data: newEvent, error: insertError } = await supabase
       .from('events')

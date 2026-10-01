@@ -33,7 +33,7 @@ export default function AppButton({
         <Ionicons
           name={icon}
           size={20}
-          color={isPrimary ? COLORS.textOnPrimary : COLORS.textSecondary}
+          color={isPrimary ? COLORS.textOnPrimary : COLORS.primary}
         />
         <Text style={[styles.label, isPrimary && styles.labelPrimary]}>
           {title}
@@ -54,11 +54,23 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     borderWidth: 1,
     borderColor: COLORS.primary,
+    // Neon glow — mo-siga ang primary button sa dark background
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.7,
+    shadowRadius: 12,
+    elevation: 8,
   },
   secondaryFill: {
     backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.border,
+    // Hinay nga glow para sa secondary buttons
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
   },
   row: {
     flexDirection: 'row',

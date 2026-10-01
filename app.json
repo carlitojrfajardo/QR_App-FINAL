@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "QR Attendance App",
-    "slug": "qrchristian",
+    "slug": "qr-att-midterm",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "qrattendanceapp",
@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FEF9C3"
+      "backgroundColor": "#060A13"
     },
     "ios": {
       "supportsTablet": true
@@ -19,7 +19,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#EAB308"
+        "backgroundColor": "#00FF9D"
       },
       "package": "com.school.qrattendance",
       "permissions": [
@@ -46,7 +46,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "b51f8887-57ae-4a42-a620-a2ea12c42b03"
+        "projectId": "c33b017c-be5d-498d-89fc-08e3c117a128"
       }
     }
   }
