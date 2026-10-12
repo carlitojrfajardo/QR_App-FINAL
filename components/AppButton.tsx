@@ -33,9 +33,15 @@ export default function AppButton({
         <Ionicons
           name={icon}
           size={20}
-          color={isPrimary ? COLORS.textOnPrimary : COLORS.primary}
+          color={isPrimary ? COLORS.textOnPrimary : COLORS.textPrimary}
         />
-        <Text style={[styles.label, isPrimary && styles.labelPrimary]}>
+        <Text
+          style={[
+            styles.label,
+            { color: isPrimary ? COLORS.textOnPrimary : COLORS.textPrimary },
+            isPrimary && styles.labelPrimary,
+          ]}
+        >
           {title}
         </Text>
       </View>
@@ -49,28 +55,16 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 16,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   primaryFill: {
     backgroundColor: COLORS.primary,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    // Neon glow — mo-siga ang primary button sa dark background
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.7,
-    shadowRadius: 12,
-    elevation: 8,
+    borderColor: COLORS.outline,
   },
   secondaryFill: {
     backgroundColor: COLORS.card,
-    borderWidth: 1,
     borderColor: COLORS.border,
-    // Hinay nga glow para sa secondary buttons
-    shadowColor: COLORS.shadow,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 3,
   },
   row: {
     flexDirection: 'row',
@@ -80,11 +74,9 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.textSecondary,
   },
   labelPrimary: {
     fontWeight: '700',
-    color: COLORS.textOnPrimary,
   },
   pressed: {
     opacity: 0.85,

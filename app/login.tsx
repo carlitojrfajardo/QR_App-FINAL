@@ -95,7 +95,7 @@ export default function LoginScreen() {
               {loading ? (
                 <ActivityIndicator
                   size="large"
-                  color={COLORS.primary}
+                  color={COLORS.textOnBackground}
                   style={styles.loader}
                 />
               ) : (
@@ -139,13 +139,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: COLORS.textOnBackground,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 15,
     lineHeight: 21,
-    color: COLORS.textSecondary,
+    color: COLORS.mutedOnBackground,
     marginBottom: 32,
   },
   form: {
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.textOnBackground,
     marginBottom: 6,
     marginTop: 10,
   },
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   },
   error: {
     fontSize: 14,
-    color: COLORS.danger,
+    color: COLORS.textOnBackground,
     marginTop: 12,
     marginBottom: 4,
   },
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   },
   link: {
     fontSize: 14,
-    color: COLORS.primary,
+    color: COLORS.textOnBackground,
     fontWeight: '600',
   },
 });

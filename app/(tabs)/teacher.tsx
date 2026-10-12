@@ -17,8 +17,18 @@ import AppButton from '@/components/AppButton';
 import { COLORS } from '@/constants/colors';
 import { useAuth } from '@/lib/auth';
 import { getProfile, type Role } from '@/lib/profiles';
-import { createEvent } from '@/lib/events';
-import { buildQRPayload } from '@/lib/qr';
+import {
+  createEvent,
+  updateEvent,
+  closeEvent,
+  reopenEvent,
+  rotateQrToken,
+  getEventsByTeacher,
+  getAllEvents,
+  getEventByCode,
+  type CloudEvent,
+} from '@/lib/events';
+import { buildSmartQRPayload } from '@/lib/qr';
 
 export default function TeacherScreen() {
   const { user } = useAuth();
@@ -27,6 +37,8 @@ export default function TeacherScreen() {
 
   const [title, setTitle] = useState('');
   const [eventId, setEventId] = useState('');
+  const [venue, setVenue] = useState('');
+  const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(
     new Date(Date.now() + 60 * 60 * 1000)
@@ -34,26 +46,39 @@ export default function TeacherScreen() {
   const [editTarget, setEditTarget] = useState<'start' | 'end' | null>(null);
   const [editingPart, setEditingPart] = useState<'date' | 'time'>('date');
   const [payload, setPayload] = useState<string | null>(null);
+  const [qrExpiry, setQrExpiry] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [editingCode, setEditingCode] = useState<string | null>(null);
+  const [myEvents, setMyEvents] = useState<CloudEvent[]>([]);
+
+  const loadEvents = useCallback(async () => {
+    if (!user) return;
+    const profile = await getProfile(user.id);
+    const r = profile?.role ?? 'student';
+    setRole(r);
+    setRoleLoading(false);
+    if (r === 'teacher') {
+      setMyEvents(await getEventsByTeacher(user.id));
+    } else if (r === 'admin') {
+      setMyEvents(await getAllEvents());
+    }
+  }, [user]);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      if (!user) {
-        setRoleLoading(false);
-        return () => {
-          active = false;
-        };
-      }
-      getProfile(user.id).then((profile) => {
+      (async () => {
+        if (!user) {
+          setRoleLoading(false);
+          return;
+        }
+        await loadEvents();
         if (!active) return;
-        setRole(profile?.role ?? 'student');
-        setRoleLoading(false);
-      });
+      })();
       return () => {
         active = false;
       };
-    }, [user])
+    }, [user, loadEvents])
   );
 
   if (roleLoading) {
@@ -64,7 +89,7 @@ export default function TeacherScreen() {
     );
   }
 
-  if (role !== 'teacher') {
+  if (role !== 'teacher' && role !== 'admin') {
     return (
       <View style={styles.centered}>
         <Ionicons
@@ -84,7 +109,21 @@ export default function TeacherScreen() {
     setEndDate(new Date(startDate.getTime() + minutes * 60 * 1000));
   };
 
-  const handleCreateEvent = () => {
+  const refreshQr = async (code: string, minutes = 5) => {
+    const res = await rotateQrToken(code, minutes);
+    if (res.error || !res.token || !res.expiresAt) {
+      setMessage('Could not rotate QR. Please try again.');
+      return;
+    }
+    setPayload(buildSmartQRPayload(code, res.token, res.expiresAt));
+    setQrExpiry(res.expiresAt);
+    setMessage(
+      `Smart QR rotated! Valid for ${minutes} min. Old screenshots won't work.`
+    );
+    loadEvents();
+  };
+
+  const handleCreateEvent = async () => {
     setMessage(null);
     if (!title.trim() || !eventId.trim()) {
       setMessage('Event title and code are required.');
@@ -99,20 +138,69 @@ export default function TeacherScreen() {
       title: title.trim(),
       start: startDate.toISOString(),
       end: endDate.toISOString(),
+      venue: venue.trim(),
+      description: description.trim(),
     };
-    createEvent(eventData).then(({ error }) => {
+
+    // Edit mode: update ra, dili create.
+    if (editingCode) {
+      const { error } = await updateEvent(editingCode, {
+        title: eventData.title,
+        start: eventData.start,
+        end: eventData.end,
+        venue: eventData.venue,
+        description: eventData.description,
+      });
       if (error) {
-        setMessage('Could not save the event. Please try again.');
+        setMessage('Could not update the event. Please try again.');
         return;
       }
-      setMessage('Event saved! Scan the QR with the Scan tab to test it.');
-      setPayload(buildQRPayload(eventData));
-    });
+      setMessage('Event updated!');
+      setEditingCode(null);
+      loadEvents();
+      return;
+    }
+
+    const { error } = await createEvent(eventData);
+    if (error) {
+      setMessage('Could not save the event. Please try again.');
+      return;
+    }
+    // Smart QR dayon: rotate para naay token + 5-min expiry.
+    setMessage('Event saved! Generating Smart QR...');
+    await refreshQr(eventData.eventId, 5);
+    loadEvents();
+  };
+
+  const handleEdit = async (code: string) => {
+    const ev = await getEventByCode(code);
+    if (!ev) return;
+    setEditingCode(code);
+    setEventId(ev.event_code);
+    setTitle(ev.title);
+    setVenue(ev.venue ?? '');
+    setDescription(ev.description ?? '');
+    if (ev.start_time) setStartDate(new Date(ev.start_time));
+    if (ev.end_time) setEndDate(new Date(ev.end_time));
+    setMessage(`Editing ${code} — update the fields then press Update.`);
+  };
+
+  const handleCloseToggle = async (ev: CloudEvent) => {
+    if (ev.status === 'closed') {
+      const { error } = await reopenEvent(ev.event_code);
+      setMessage(error ? 'Could not reopen.' : `${ev.event_code} reopened.`);
+    } else {
+      const { error } = await closeEvent(ev.event_code);
+      setMessage(error ? 'Could not close.' : `${ev.event_code} closed. Scans blocked.`);
+    }
+    loadEvents();
   };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Create Event</Text>
+      <Text style={styles.title}>
+        {editingCode ? `Edit ${editingCode}` : 'Create Event'}
+      </Text>
 
       <Text style={styles.label}>Event Title</Text>
       <TextInput
@@ -131,6 +219,26 @@ export default function TeacherScreen() {
         placeholder="EVT-2026-0001"
         placeholderTextColor={COLORS.textSecondary}
         autoCapitalize="characters"
+        editable={!editingCode}
+      />
+
+      <Text style={styles.label}>Venue</Text>
+      <TextInput
+        style={styles.input}
+        value={venue}
+        onChangeText={setVenue}
+        placeholder="Gymnasium / Room 301"
+        placeholderTextColor={COLORS.textSecondary}
+      />
+
+      <Text style={styles.label}>Description</Text>
+      <TextInput
+        style={[styles.input, styles.multiline]}
+        value={description}
+        onChangeText={setDescription}
+        placeholder="What is this event about?"
+        placeholderTextColor={COLORS.textSecondary}
+        multiline
       />
 
       <Text style={styles.label}>Start Time</Text>
@@ -138,7 +246,7 @@ export default function TeacherScreen() {
         style={styles.input}
         onPress={() => {
           setEditTarget('start');
-          setEditingPart(Platform.OS === 'ios' ? 'date' : 'date');
+          setEditingPart('date');
         }}
       >
         <Text style={styles.inputText}>{startDate.toLocaleString()}</Text>
@@ -229,15 +337,26 @@ export default function TeacherScreen() {
 
       <AppButton
         theme="primary"
-        title="Create Event"
-        icon="add-outline"
+        title={editingCode ? 'Update Event' : 'Create Event'}
+        icon={editingCode ? 'save-outline' : 'add-outline'}
         onPress={handleCreateEvent}
       />
+      {editingCode && (
+        <AppButton
+          title="Cancel Edit"
+          icon="close-outline"
+          onPress={() => {
+            setEditingCode(null);
+            setTitle('');
+            setEventId('');
+            setVenue('');
+            setDescription('');
+          }}
+        />
+      )}
 
       {payload && (
         <View style={styles.qrCard}>
-          {/* White quiet-zone box — mas dali ma-scan sa camera kung puti ang palibot sa QR.
-              Compact payload + ecl="L" + dako nga size = pinakapaspas ma-scan. */}
           <View style={styles.qrBox}>
             <QRCode
               value={payload}
@@ -248,11 +367,83 @@ export default function TeacherScreen() {
             />
           </View>
           <Text style={styles.eventCodeText}>{eventId.trim()}</Text>
+          {qrExpiry && (
+            <Text style={styles.scanHint}>
+              Expires: {new Date(qrExpiry).toLocaleTimeString()}
+            </Text>
+          )}
           <Text style={styles.scanHint}>
-            Itutok lang ang phone sa student — dali ra ni ma-scan
+            Smart QR — rotating & time-limited. Screenshots stop working after rotation.
           </Text>
+          <View style={styles.row}>
+            <Pressable
+              style={styles.smallBtn}
+              onPress={() => refreshQr(eventId.trim(), 5)}
+            >
+              <Text style={styles.smallBtnText}>Rotate (5 min)</Text>
+            </Pressable>
+            <Pressable
+              style={styles.smallBtn}
+              onPress={() => refreshQr(eventId.trim(), 30)}
+            >
+              <Text style={styles.smallBtnText}>Rotate (30 min)</Text>
+            </Pressable>
+          </View>
           <Text style={styles.payloadText}>{payload}</Text>
         </View>
+      )}
+
+      <Text style={[styles.title, { marginTop: 20 }]}>My Events</Text>
+      {myEvents.length === 0 ? (
+        <Text style={styles.muted}>No events yet.</Text>
+      ) : (
+        myEvents.map((ev) => (
+          <View key={ev.id} style={styles.eventCard}>
+            <View style={styles.eventHeader}>
+              <Text style={styles.eventTitle}>{ev.title}</Text>
+              <Text
+                style={[
+                  styles.statusBadge,
+                  ev.status === 'closed' ? styles.closed : styles.open,
+                ]}
+              >
+                {ev.status}
+              </Text>
+            </View>
+            <Text style={styles.cardMuted}>
+              {ev.event_code}
+              {ev.venue ? ` • ${ev.venue}` : ''}
+            </Text>
+            {ev.description ? (
+              <Text style={styles.cardMuted}>{ev.description}</Text>
+            ) : null}
+            <View style={styles.row}>
+              <Pressable
+                style={styles.smallBtn}
+                onPress={() => handleEdit(ev.event_code)}
+              >
+                <Text style={styles.smallBtnText}>Edit</Text>
+              </Pressable>
+              <Pressable
+                style={styles.smallBtn}
+                onPress={() => handleCloseToggle(ev)}
+              >
+                <Text style={styles.smallBtnText}>
+                  {ev.status === 'closed' ? 'Reopen' : 'Close'}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={styles.smallBtn}
+                onPress={() => {
+                  setEventId(ev.event_code);
+                  refreshQr(ev.event_code, 5);
+                }}
+              >
+                <Text style={styles.smallBtnText}>Show QR</Text>
+              </Pressable>
+            </View>
+          </View>
+        ))
       )}
     </ScrollView>
   );
@@ -278,13 +469,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: COLORS.textOnBackground,
     marginBottom: 8,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.textOnBackground,
     marginTop: 10,
     marginBottom: 6,
   },
@@ -297,6 +488,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: COLORS.textPrimary,
+  },
+  multiline: {
+    minHeight: 70,
+    textAlignVertical: 'top',
   },
   inputText: {
     fontSize: 16,
@@ -322,7 +517,7 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: COLORS.mutedOnBackground,
     marginVertical: 8,
   },
   qrCard: {
@@ -360,7 +555,68 @@ const styles = StyleSheet.create({
   },
   muted: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: COLORS.mutedOnBackground,
     textAlign: 'center',
+  },
+  cardMuted: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'left',
+  },
+  eventCard: {
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    padding: 14,
+    marginTop: 10,
+    gap: 6,
+  },
+  eventHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  eventTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    flex: 1,
+  },
+  statusBadge: {
+    fontSize: 12,
+    fontWeight: '700',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  open: {
+    backgroundColor: COLORS.success,
+    color: COLORS.textOnPrimary,
+  },
+  closed: {
+    backgroundColor: COLORS.card,
+    color: COLORS.textPrimary,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  smallBtn: {
+    backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  smallBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.textOnBackground,
   },
 });

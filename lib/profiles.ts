@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-export type Role = 'student' | 'teacher';
+export type Role = 'student' | 'teacher' | 'admin';
 
 export type Profile = {
   id: string;
@@ -32,5 +32,28 @@ export async function updateProfile(
     .update(updates)
     .eq('id', userId);
 
+  return { error: error?.message ?? null };
+}
+
+// ---- Admin: user management (PDF: Administrator can manage users) ----
+
+export async function getAllProfiles(): Promise<Profile[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, email, full_name, role')
+    .order('created_at', { ascending: false })
+    .limit(100);
+  if (error || !data) return [];
+  return data as Profile[];
+}
+
+export async function updateUserRole(
+  targetUserId: string,
+  role: Role
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ role })
+    .eq('id', targetUserId);
   return { error: error?.message ?? null };
 }

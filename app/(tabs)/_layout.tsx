@@ -6,15 +6,15 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textSecondary,
+        tabBarActiveTintColor: COLORS.textOnBackground,
+        tabBarInactiveTintColor: COLORS.mutedOnBackground,
         headerShown: true,
         headerStyle: { backgroundColor: COLORS.background },
-        headerTintColor: COLORS.textPrimary,
+        headerTintColor: COLORS.textOnBackground,
         headerTitleStyle: { fontWeight: '700' },
         tabBarStyle: {
-          backgroundColor: COLORS.card,
-          borderTopColor: COLORS.border,
+          backgroundColor: COLORS.background,
+          borderTopColor: COLORS.outline,
           borderTopWidth: 1,
         },
       }}
@@ -52,6 +52,15 @@ export default function TabLayout() {
           title: 'Teacher',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="clipboard" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: 'Dashboard',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="stats-chart" size={size} color={color} />
           ),
         }}
       />

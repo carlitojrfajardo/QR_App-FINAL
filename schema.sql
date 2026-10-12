@@ -24,10 +24,27 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   email text not null,
   full_name text,
-  role text not null default 'student' check (role in ('student', 'teacher')),
+  role text not null default 'student' check (role in ('student', 'teacher', 'admin')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Upgrade path: kung daan nga DB naay old CHECK (student/teacher lang),
+-- ilisan ug bag-o nga mu-allow ug admin.
+do $$
+begin
+  if exists (
+    select 1 from pg_constraint
+    where conname = 'profiles_role_check'
+      and conrelid = 'public.profiles'::regclass
+  ) then
+    alter table public.profiles drop constraint profiles_role_check;
+    alter table public.profiles
+      add constraint profiles_role_check
+      check (role in ('student', 'teacher', 'admin'));
+  end if;
+end
+$$;
 
 alter table public.profiles enable row level security;
 
@@ -80,11 +97,53 @@ create table if not exists public.events (
   title text not null,
   start_time timestamptz,
   end_time timestamptz,
+  venue text,
+  description text,
+  status text not null default 'open' check (status in ('open', 'closed')),
+  qr_token text,
+  qr_expires_at timestamptz,
   created_by uuid references auth.users (id) on delete set null,
   created_at timestamptz not null default now()
 );
 
+-- Upgrade path para sa daan nga events table (walay bag-ong columns).
+alter table public.events add column if not exists venue text;
+alter table public.events add column if not exists description text;
+alter table public.events add column if not exists status text not null default 'open';
+alter table public.events add column if not exists qr_token text;
+alter table public.events add column if not exists qr_expires_at timestamptz;
+
+do $$
+begin
+  if exists (
+    select 1 from pg_constraint
+    where conname = 'events_status_check'
+      and conrelid = 'public.events'::regclass
+  ) then
+    -- naa na, ayaw na hilabti
+    null;
+  else
+    alter table public.events
+      add constraint events_status_check
+      check (status in ('open', 'closed'));
+  end if;
+end
+$$;
+
 alter table public.events enable row level security;
+
+-- Helper sayo pa lang (kinahanglan sa insert policy sa ubos).
+-- Tinuod kung ang naka-login kay admin.
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role = 'admin'
+  );
+$$;
 
 -- Events policies
 -- Any signed-in user can read event details (needed to validate QR codes)
@@ -93,11 +152,18 @@ create policy "Events are readable by any authenticated user"
   on public.events for select
   using (auth.role() = 'authenticated');
 
--- Only the creator can insert / update their events
+-- PDF role-based authorization: Teacher ug Admin ra pwede mag-create ug events.
+-- Student blocked sa DB level (dili lang sa UI).
 drop policy if exists "Users can insert events" on public.events;
-create policy "Users can insert events"
+drop policy if exists "Teachers and admins can insert events" on public.events;
+create policy "Teachers and admins can insert events"
   on public.events for insert
-  with check (auth.role() = 'authenticated');
+  with check (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role in ('teacher', 'admin')
+    )
+  );
 
 drop policy if exists "Users can update their own events" on public.events;
 create policy "Users can update their own events"
@@ -115,8 +181,26 @@ create table if not exists public.attendance (
   student_id uuid not null references auth.users (id) on delete cascade,
   event_id uuid not null references public.events (id) on delete cascade,
   scanned_at timestamptz not null default now(),
+  status text not null default 'present' check (status in ('present', 'late')),
   unique (student_id, event_id)
 );
+
+-- Upgrade path para sa daan nga attendance table.
+alter table public.attendance add column if not exists status text not null default 'present';
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'attendance_status_check'
+      and conrelid = 'public.attendance'::regclass
+  ) then
+    alter table public.attendance
+      add constraint attendance_status_check
+      check (status in ('present', 'late'));
+  end if;
+end
+$$;
 
 alter table public.attendance enable row level security;
 
@@ -158,6 +242,68 @@ create policy "Teachers can view profiles of their attendees"
         and e.created_by = auth.uid()
     )
   );
+
+-- ------------------------------------------------------------
+-- 4. ADMIN POLICIES (Final Project requirement: Administrator role)
+-- Admin = user nga ang profiles.role = 'admin'.
+-- Kinahanglan i-run human sa tables para magamit sa policies.
+-- ------------------------------------------------------------
+
+-- Helper: tinuod kung ang naka-login kay admin.
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer set search_path = public
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role = 'admin'
+  );
+$$;
+
+-- Profiles: admin makakita ug maka-update sa tanan (para sa user management).
+drop policy if exists "Admins can view all profiles" on public.profiles;
+create policy "Admins can view all profiles"
+  on public.profiles for select
+  using (public.is_admin());
+
+drop policy if exists "Admins can update all profiles" on public.profiles;
+create policy "Admins can update all profiles"
+  on public.profiles for update
+  using (public.is_admin());
+
+-- Events: admin makakita, makahimo, maka-edit/close sa tanang events.
+drop policy if exists "Admins can view all events" on public.events;
+create policy "Admins can view all events"
+  on public.events for select
+  using (public.is_admin());
+
+drop policy if exists "Admins can update all events" on public.events;
+create policy "Admins can update all events"
+  on public.events for update
+  using (public.is_admin());
+
+drop policy if exists "Admins can delete events" on public.events;
+create policy "Admins can delete events"
+  on public.events for delete
+  using (public.is_admin());
+
+-- Attendance: admin makakita sa tanan + maka-correct/delete
+-- (PDF requirement: Manage or correct attendance records).
+drop policy if exists "Admins can view all attendance" on public.attendance;
+create policy "Admins can view all attendance"
+  on public.attendance for select
+  using (public.is_admin());
+
+drop policy if exists "Admins can update all attendance" on public.attendance;
+create policy "Admins can update all attendance"
+  on public.attendance for update
+  using (public.is_admin());
+
+drop policy if exists "Admins can delete attendance" on public.attendance;
+create policy "Admins can delete attendance"
+  on public.attendance for delete
+  using (public.is_admin());
 
 ------------------------------------------------------------
 -- END OF SCHEMA

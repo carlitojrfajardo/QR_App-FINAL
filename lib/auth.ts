@@ -44,7 +44,7 @@ export function useAuth(): AuthState {
 
 export type SignUpProfile = {
   full_name: string;
-  role: 'student' | 'teacher';
+  role: 'student' | 'teacher' | 'admin';
 };
 
 export async function signUp(

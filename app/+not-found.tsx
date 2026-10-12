@@ -27,12 +27,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: COLORS.textOnBackground,
     marginBottom: 12,
   },
   link: {
     fontSize: 15,
-    color: COLORS.primary,
+    color: COLORS.textOnBackground,
     fontWeight: '600',
   },
 });

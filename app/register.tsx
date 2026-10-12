@@ -24,7 +24,7 @@ export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState<'student' | 'teacher'>('student');
+  const [role, setRole] = useState<'student' | 'teacher' | 'admin'>('student');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -151,6 +151,22 @@ export default function RegisterScreen() {
                       Teacher
                     </Text>
                   </Pressable>
+                  <Pressable
+                    style={[
+                      styles.roleChip,
+                      role === 'admin' && styles.roleChipActive,
+                    ]}
+                    onPress={() => setRole('admin')}
+                  >
+                    <Text
+                      style={[
+                        styles.roleChipText,
+                        role === 'admin' && styles.roleChipTextActive,
+                      ]}
+                    >
+                      Admin
+                    </Text>
+                  </Pressable>
                 </View>
 
                 <Text style={styles.label}>Email</Text>
@@ -192,7 +208,7 @@ export default function RegisterScreen() {
                 {loading ? (
                   <ActivityIndicator
                     size="large"
-                    color={COLORS.primary}
+                    color={COLORS.textOnBackground}
                     style={styles.loader}
                   />
                 ) : (
@@ -239,13 +255,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: COLORS.textOnBackground,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 15,
     lineHeight: 21,
-    color: COLORS.textSecondary,
+    color: COLORS.mutedOnBackground,
     marginBottom: 32,
   },
   form: {
@@ -255,7 +271,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.textPrimary,
+    color: COLORS.textOnBackground,
     marginBottom: 6,
     marginTop: 10,
   },
@@ -283,8 +299,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   roleChipActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primary + '14',
+    borderColor: COLORS.outline,
+    backgroundColor: COLORS.primary,
   },
   roleChipText: {
     fontSize: 15,
@@ -293,11 +309,11 @@ const styles = StyleSheet.create({
   },
   roleChipTextActive: {
     fontWeight: '700',
-    color: COLORS.primary,
+    color: COLORS.textOnPrimary,
   },
   error: {
     fontSize: 14,
-    color: COLORS.danger,
+    color: COLORS.textOnBackground,
     marginTop: 12,
     marginBottom: 4,
   },
@@ -306,7 +322,7 @@ const styles = StyleSheet.create({
   },
   link: {
     fontSize: 14,
-    color: COLORS.primary,
+    color: COLORS.textOnBackground,
     fontWeight: '600',
   },
   successContainer: {

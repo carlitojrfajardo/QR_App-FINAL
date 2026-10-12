@@ -74,9 +74,13 @@ export default function ProfileScreen() {
         <View style={styles.roleBadge}>
           <Text style={styles.roleBadgeText}>Teacher</Text>
         </View>
+      ) : profile?.role === 'admin' ? (
+        <View style={[styles.roleBadge, styles.roleBadgeAdmin]}>
+          <Text style={styles.roleBadgeText}>Admin</Text>
+        </View>
       ) : (
         <View style={[styles.roleBadge, styles.roleBadgeStudent]}>
-          <Text style={styles.roleBadgeText}>Student</Text>
+          <Text style={styles.roleBadgeTextLight}>Student</Text>
         </View>
       )}
 
@@ -137,22 +141,32 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: COLORS.textOnBackground,
     marginBottom: 12,
   },
   roleBadge: {
     alignSelf: 'flex-start',
     backgroundColor: COLORS.primary,
+    borderWidth: 1,
+    borderColor: COLORS.outline,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 4,
     marginBottom: 12,
   },
   roleBadgeStudent: {
-    backgroundColor: COLORS.warning,
+    backgroundColor: COLORS.card,
+  },
+  roleBadgeAdmin: {
+    backgroundColor: COLORS.primary,
   },
   roleBadgeText: {
     color: COLORS.textOnPrimary,
+    fontWeight: '700',
+    fontSize: 12,
+  },
+  roleBadgeTextLight: {
+    color: COLORS.textPrimary,
     fontWeight: '700',
     fontSize: 12,
   },
@@ -199,12 +213,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.background,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 15,
-    color: COLORS.textPrimary,
+    color: COLORS.textOnBackground,
   },
   saveBtn: {
     backgroundColor: COLORS.primary,

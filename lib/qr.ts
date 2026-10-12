@@ -4,6 +4,10 @@ export type QRPayload = {
   title?: string;
   start?: string;
   end?: string;
+  /** Smart QR token — kinahanglan mu-match sa events.qr_token sa DB. */
+  t?: string;
+  /** Expiry timestamp (ISO) — para sa time-limited QR. */
+  exp?: string;
 };
 
 export function buildQRPayload(
@@ -12,6 +16,8 @@ export function buildQRPayload(
     title?: string;
     start?: string;
     end?: string;
+    token?: string | null;
+    expiresAt?: string | null;
   },
   opts?: { compact?: boolean }
 ): string {
@@ -21,20 +27,35 @@ export function buildQRPayload(
   // Ang title/start/end naa naman sa cloud (events table) —
   // ang scanner mag-lookup via getEventByCode, dili na kinahanglan sa QR.
   const compact = opts?.compact ?? true;
-  if (compact) {
+  if (compact && !event.token) {
     return JSON.stringify({ v: 1, event: event.eventId.trim() });
   }
 
+  // Smart QR: event + token + expiry para rotating/time-limited/anti-reuse.
   const payload: QRPayload = {
     v: 1,
-    event: event.eventId,
+    event: event.eventId.trim(),
   };
-
-  if (event.title) payload.title = event.title;
-  if (event.start) payload.start = event.start;
-  if (event.end) payload.end = event.end;
-
+  if (!compact && event.title) payload.title = event.title;
+  if (!compact && event.start) payload.start = event.start;
+  if (!compact && event.end) payload.end = event.end;
+  if (event.token) payload.t = event.token;
+  if (event.expiresAt) payload.exp = event.expiresAt;
   return JSON.stringify(payload);
+}
+
+/** Smart QR builder — para sa rotating/time-limited QR sa teacher screen. */
+export function buildSmartQRPayload(
+  eventCode: string,
+  token: string,
+  expiresAt: string
+): string {
+  return JSON.stringify({
+    v: 1,
+    event: eventCode.trim(),
+    t: token,
+    exp: expiresAt,
+  });
 }
 
 export type ParseQRResult =
@@ -76,3 +97,13 @@ export function parseQRPayload(raw: string): ParseQRResult {
 
   return { ok: false, message: 'Invalid QR code.' };
 }
+
+/** Para sa defense: 5 ka events nga klaro ma-explain (Event -> Handler -> Action -> Result). */
+export const DEMO_EVENTS = [
+  'User presses Login -> signIn -> session set -> tabs open',
+  'QR Scanner detects QR -> parseQRPayload -> validate token/expiry -> attendance insert',
+  'Teacher rotates QR -> rotateQrToken -> new token/expiry -> old screenshot rejected',
+  'Duplicate scan -> unique constraint 23505 -> "Already registered" message',
+  'Teacher closes event -> status=closed -> scans blocked with "Event is closed"',
+  'Late scan -> start+grace compare -> status=late saved + "Late" confirmation',
+] as const;

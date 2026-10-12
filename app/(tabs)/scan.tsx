@@ -61,7 +61,7 @@ export default function ScanScreen() {
   const handleManualSubmit = () => {
     const code = manualCode.trim();
     if (!code) {
-      setMessage('I-type ang event code (e.g. EVT-2026-0001).');
+      setMessage('Type the event code (e.g. EVT-2026-0001).');
       setSuccess(false);
       return;
     }
@@ -118,6 +118,8 @@ export default function ScanScreen() {
               style={styles.input}
               value={manualCode}
               onChangeText={setManualCode}
+              placeholder="Event code (e.g. EVT-2026-0001)"
+              placeholderTextColor={COLORS.mutedOnBackground}
               autoCapitalize="characters"
             />
             <AppButton
@@ -153,8 +155,8 @@ const styles = StyleSheet.create({
   frame: {
     width: 260,
     height: 260,
-    borderWidth: 3,
-    borderColor: COLORS.primary,
+    borderWidth: 2,
+    borderColor: COLORS.outline,
     borderRadius: 16,
     backgroundColor: 'transparent',
   },
@@ -183,22 +185,22 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: COLORS.textPrimary,
+    color: COLORS.textOnBackground,
   },
   subtitle: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: COLORS.mutedOnBackground,
     marginBottom: 8,
   },
   input: {
     backgroundColor: COLORS.background,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.background,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
-    color: COLORS.textPrimary,
+    color: COLORS.textOnBackground,
   },
   message: {
     fontSize: 16,

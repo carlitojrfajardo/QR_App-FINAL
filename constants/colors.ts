@@ -1,30 +1,24 @@
 export const COLORS = {
-  // Main neon — mint green nga mo-glow sa dark
-  primary: '#00FF9D',
-  // Deep dark background para mo-pop ang neon
-  background: '#060A13',
-  // Dark card surfaces
-  card: '#0F172A',
-  // Near-white nga text para readable sa dark
-  textPrimary: '#F2FFF8',
-  // Muted blue-grey para sa secondary text / placeholder
-  textSecondary: '#8EA0BF',
-  // Dark text sa ibabaw sa neon button (para contrast)
-  textOnPrimary: '#04220F',
-  // Dark green-tinted surface (logo circle, highlights)
-  surface: '#0C2B21',
-  // Neon hairline border — mao ni maghatag ug neon frame sa inputs/cards
-  border: '#00FF9D',
-  // Glow color para sa shadows
-  shadow: '#00FF9D',
-  // Semantic states — neon versions
-  warning: '#FAFF00',
-  success: '#00FF9D',
-  danger: '#FF2E88',
-  // Extra neon accents (optional gamiton sa future screens)
-  neon: '#00FF9D',
-  neonCyan: '#00E5FF',
-  neonPink: '#FF2E88',
-  neonPurple: '#A855F7',
-  neonYellow: '#FAFF00',
+  // Screen background (warm taupe) — surfaces behind text stay cream.
+  // Dark text lives on cream AND on taupe; cream is reserved for
+  // text on dark fills and outlines.
+  primary: '#2B1E12',
+  background: '#A5907B',
+  card: '#F6EFDA',
+  textPrimary: '#1E140C',
+  textSecondary: '#6B5B45',
+  textOnPrimary: '#F6EFDA',
+  surface: '#F6EFDA',
+  border: '#1E140C',
+  shadow: '#000000',
+  // Semantic states — dark on cream (distinction via fill: dark vs cream)
+  warning: '#1E140C',
+  success: '#1E140C',
+  danger: '#1E140C',
+  // Text for content sitting directly on the taupe background (dark = readable)
+  textOnBackground: '#1E140C',
+  mutedOnBackground: '#4A3A28',
+  outline: '#F6EFDA',
+  // Progress-bar track on cream cards
+  track: '#D9CBA6',
 } as const;
