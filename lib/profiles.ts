@@ -2,6 +2,9 @@ import { supabase } from './supabase';
 
 export type Role = 'student' | 'teacher' | 'admin';
 
+/** Roles an admin is allowed to assign from the dashboard. */
+export type AssignableRole = Exclude<Role, 'admin'>;
+
 export type Profile = {
   id: string;
   email: string;
@@ -49,7 +52,7 @@ export async function getAllProfiles(): Promise<Profile[]> {
 
 export async function updateUserRole(
   targetUserId: string,
-  role: Role
+  role: AssignableRole
 ): Promise<{ error: string | null }> {
   const { error } = await supabase
     .from('profiles')

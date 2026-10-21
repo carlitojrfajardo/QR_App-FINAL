@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import BrandBackground from '@/components/BrandBackground';
 import { COLORS } from '@/constants/colors';
 import { useAuth } from '@/lib/auth';
 import { getProfile, type Role } from '@/lib/profiles';
@@ -79,140 +80,152 @@ export default function HistoryScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.textOnBackground} />
-        <Text style={styles.muted}>Loading records...</Text>
-      </View>
+      <BrandBackground>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={COLORS.textOnBackground} />
+          <Text style={styles.muted}>Loading records...</Text>
+        </View>
+      </BrandBackground>
     );
   }
 
   if (role === 'teacher' || role === 'admin') {
     if (teacherEvents.length === 0) {
       return (
-        <View style={styles.centered}>
-          <Text style={styles.title}>No events yet</Text>
-          <Text style={styles.muted}>
-            {role === 'admin'
-              ? 'Campus-wide view is in the Dashboard tab.'
-              : 'Create an event in the Teacher tab to see attendance here.'}
-          </Text>
-        </View>
+        <BrandBackground>
+          <View style={styles.centered}>
+            <Text style={styles.title}>No events yet</Text>
+            <Text style={styles.muted}>
+              {role === 'admin'
+                ? 'Campus-wide view is in the Dashboard tab.'
+                : 'Create an event in the Teacher tab to see attendance here.'}
+            </Text>
+          </View>
+        </BrandBackground>
       );
     }
     return (
-      <FlatList
-        style={styles.list}
-        contentContainerStyle={styles.listContent}
-        data={teacherEvents}
-        keyExtractor={(item) => item.eventId}
-        ListHeaderComponent={
-          <View>
-            <Text style={styles.screenTitle}>History</Text>
-            <Text style={styles.liveHint}>
-              ● Live — auto-refresh every 10s
-            </Text>
-          </View>
-        }
-        renderItem={({ item }) => {
-          // Event date sama sa Image 2: created_at, fallback sa startTime
-          const eventDate = item.createdAt ?? item.startTime;
-          return (
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <View style={styles.countBadge}>
-                  <Text style={styles.countText}>{item.attendeeCount}</Text>
-                </View>
-              </View>
-              <Text style={styles.code}>{item.eventCode}</Text>
-              {eventDate ? (
-                <Text style={styles.code}>
-                  {new Date(eventDate).toLocaleString()}
-                </Text>
-              ) : null}
-              <Text style={styles.stats}>
-                Present: {item.presentCount} • Late: {item.lateCount}
+      <BrandBackground>
+        <FlatList
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          data={teacherEvents}
+          keyExtractor={(item) => item.eventId}
+          ListHeaderComponent={
+            <View>
+              <Text style={styles.screenTitle}>History</Text>
+              <Text style={styles.liveHint}>
+                ● Live — auto-refresh every 10s
               </Text>
-              <View style={styles.divider} />
-              {/* Makita ang student sa ubos if naka-scan na, sama sa Image 2 */}
-              {item.attendees.length === 0 ? (
-                <Text style={styles.emptyScans}>No scans yet</Text>
-              ) : (
-                item.attendees.map((a) => (
-                  <View key={`${item.eventId}-${a.studentId}`} style={styles.attRow}>
-                    <View style={styles.attTop}>
-                      <Text style={styles.attName}>
-                        {a.studentName ?? shortId(a.studentId)}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.statusBadge,
-                          a.status === 'late'
-                            ? styles.lateBadge
-                            : styles.presentBadge,
-                        ]}
-                      >
-                        {a.status === 'late' ? 'LATE' : 'PRESENT'}
+            </View>
+          }
+          renderItem={({ item }) => {
+            // Event date sama sa Image 2: created_at, fallback sa startTime
+            const eventDate = item.createdAt ?? item.startTime;
+            return (
+              <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <Text style={styles.cardTitle}>{item.title}</Text>
+                  <View style={styles.countBadge}>
+                    <Text style={styles.countText}>{item.attendeeCount}</Text>
+                  </View>
+                </View>
+                <Text style={styles.code}>{item.eventCode}</Text>
+                {eventDate ? (
+                  <Text style={styles.code}>
+                    {new Date(eventDate).toLocaleString()}
+                  </Text>
+                ) : null}
+                <Text style={styles.stats}>
+                  Present: {item.presentCount} • Late: {item.lateCount}
+                </Text>
+                <View style={styles.divider} />
+                {/* Makita ang student sa ubos if naka-scan na, sama sa Image 2 */}
+                {item.attendees.length === 0 ? (
+                  <Text style={styles.emptyScans}>No scans yet</Text>
+                ) : (
+                  item.attendees.map((a) => (
+                    <View key={`${item.eventId}-${a.studentId}`} style={styles.attRow}>
+                      <View style={styles.attTop}>
+                        <Text style={styles.attName}>
+                          {a.studentName ?? shortId(a.studentId)}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.statusBadge,
+                            a.status === 'late'
+                              ? styles.lateBadge
+                              : styles.presentBadge,
+                          ]}
+                        >
+                          {a.status === 'late' ? 'LATE' : 'PRESENT'}
+                        </Text>
+                      </View>
+                      <Text style={styles.attTime}>
+                        {new Date(a.scannedAt).toLocaleString()}
                       </Text>
                     </View>
-                    <Text style={styles.attTime}>
-                      {new Date(a.scannedAt).toLocaleString()}
-                    </Text>
-                  </View>
-                ))
-              )}
-            </View>
-          );
-        }}
-      />
+                  ))
+                )}
+              </View>
+            );
+          }}
+        />
+      </BrandBackground>
     );
   }
 
   if (studentRecords.length === 0) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.title}>No records yet</Text>
-        <Text style={styles.muted}>
-          Scan an event QR code to record your attendance.
-        </Text>
-      </View>
+      <BrandBackground>
+        <View style={styles.centered}>
+          <Text style={styles.title}>No records yet</Text>
+          <Text style={styles.muted}>
+            Scan an event QR code to record your attendance.
+          </Text>
+        </View>
+      </BrandBackground>
     );
   }
 
   return (
-    <FlatList
-      style={styles.list}
-      contentContainerStyle={styles.listContent}
-      data={studentRecords}
-      ListHeaderComponent={<Text style={styles.screenTitle}>History</Text>}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => (
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>{item.eventTitle}</Text>
-            <Text
-              style={[
-                styles.statusBadge,
-                item.status === 'late' ? styles.lateBadge : styles.presentBadge,
-              ]}
-            >
-              {item.status === 'late' ? 'LATE' : 'PRESENT'}
+    <BrandBackground>
+      <FlatList
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        data={studentRecords}
+        ListHeaderComponent={<Text style={styles.screenTitle}>History</Text>}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>{item.eventTitle}</Text>
+              <Text
+                style={[
+                  styles.statusBadge,
+                  item.status === 'late'
+                    ? styles.lateBadge
+                    : styles.presentBadge,
+                ]}
+              >
+                {item.status === 'late' ? 'LATE' : 'PRESENT'}
+              </Text>
+            </View>
+            <Text style={styles.code}>{item.eventId}</Text>
+            <Text style={styles.attTime}>
+              {new Date(item.scannedAt).toLocaleString()}
             </Text>
           </View>
-          <Text style={styles.code}>{item.eventId}</Text>
-          <Text style={styles.attTime}>
-            {new Date(item.scannedAt).toLocaleString()}
-          </Text>
-        </View>
-      )}
-    />
+        )}
+      />
+    </BrandBackground>
   );
 }
 
 const styles = StyleSheet.create({
   list: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: 'transparent',
   },
   listContent: {
     padding: 16,
@@ -245,7 +258,7 @@ const styles = StyleSheet.create({
   },
   centered: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
@@ -265,7 +278,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 20,
+    borderRadius: 16,
     padding: 18,
     gap: 4,
   },
@@ -282,6 +295,8 @@ const styles = StyleSheet.create({
   },
   countBadge: {
     backgroundColor: COLORS.success,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     borderRadius: 24,
     width: 48,
     height: 48,
@@ -289,8 +304,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   countText: {
-    color: COLORS.textOnPrimary,
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontWeight: '800',
     fontSize: 18,
   },
   code: {
@@ -330,7 +345,7 @@ const styles = StyleSheet.create({
   },
   presentBadge: {
     backgroundColor: COLORS.success,
-    color: COLORS.textOnPrimary,
+    color: '#FFFFFF',
     borderWidth: 1,
     borderColor: COLORS.border,
   },

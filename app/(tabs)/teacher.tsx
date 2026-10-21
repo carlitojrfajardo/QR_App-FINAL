@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 
 import AppButton from '@/components/AppButton';
+import BrandBackground from '@/components/BrandBackground';
 import { COLORS } from '@/constants/colors';
 import { useAuth } from '@/lib/auth';
 import { getProfile, type Role } from '@/lib/profiles';
@@ -83,25 +84,29 @@ export default function TeacherScreen() {
 
   if (roleLoading) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.muted}>Checking your account...</Text>
-      </View>
+      <BrandBackground>
+        <View style={styles.centered}>
+          <Text style={styles.muted}>Checking your account...</Text>
+        </View>
+      </BrandBackground>
     );
   }
 
   if (role !== 'teacher' && role !== 'admin') {
     return (
-      <View style={styles.centered}>
-        <Ionicons
-          name="lock-closed-outline"
-          size={48}
-          color={COLORS.textSecondary}
-        />
-        <Text style={styles.title}>Teachers Only</Text>
-        <Text style={styles.muted}>
-          Only teacher accounts can create events.
-        </Text>
-      </View>
+      <BrandBackground>
+        <View style={styles.centered}>
+          <Ionicons
+            name="lock-closed-outline"
+            size={48}
+            color={COLORS.textSecondary}
+          />
+          <Text style={styles.title}>Teachers Only</Text>
+          <Text style={styles.muted}>
+            Only teacher accounts can create events.
+          </Text>
+        </View>
+      </BrandBackground>
     );
   }
 
@@ -109,7 +114,7 @@ export default function TeacherScreen() {
     setEndDate(new Date(startDate.getTime() + minutes * 60 * 1000));
   };
 
-  const refreshQr = async (code: string, minutes = 5) => {
+  const refreshQr = async (code: string, minutes = 60) => {
     const res = await rotateQrToken(code, minutes);
     if (res.error || !res.token || !res.expiresAt) {
       setMessage('Could not rotate QR. Please try again.');
@@ -117,8 +122,12 @@ export default function TeacherScreen() {
     }
     setPayload(buildSmartQRPayload(code, res.token, res.expiresAt));
     setQrExpiry(res.expiresAt);
+    const duration =
+      minutes >= 60
+        ? `${minutes / 60} hour${minutes === 60 ? '' : 's'}`
+        : `${minutes} min`;
     setMessage(
-      `Smart QR rotated! Valid for ${minutes} min. Old screenshots won't work.`
+      `Smart QR rotated! Valid for ${duration}. Old screenshots won't work.`
     );
     loadEvents();
   };
@@ -168,7 +177,7 @@ export default function TeacherScreen() {
     }
     // Smart QR dayon: rotate para naay token + 5-min expiry.
     setMessage('Event saved! Generating Smart QR...');
-    await refreshQr(eventData.eventId, 5);
+    await refreshQr(eventData.eventId, 60);
     loadEvents();
   };
 
@@ -197,262 +206,263 @@ export default function TeacherScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>
-        {editingCode ? `Edit ${editingCode}` : 'Create Event'}
-      </Text>
+    <BrandBackground>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <Text style={styles.title}>
+          {editingCode ? `Edit ${editingCode}` : 'Create Event'}
+        </Text>
 
-      <Text style={styles.label}>Event Title</Text>
-      <TextInput
-        style={styles.input}
-        value={title}
-        onChangeText={setTitle}
-        placeholder="Founders Day Assembly"
-        placeholderTextColor={COLORS.textSecondary}
-      />
+        <Text style={styles.label}>Event Title</Text>
+        <TextInput
+          style={styles.input}
+          value={title}
+          onChangeText={setTitle}
+          placeholder="Founders Day Assembly"
+          placeholderTextColor={COLORS.textSecondary}
+        />
 
-      <Text style={styles.label}>Event Code</Text>
-      <TextInput
-        style={styles.input}
-        value={eventId}
-        onChangeText={setEventId}
-        placeholder="EVT-2026-0001"
-        placeholderTextColor={COLORS.textSecondary}
-        autoCapitalize="characters"
-        editable={!editingCode}
-      />
+        <Text style={styles.label}>Event Code</Text>
+        <TextInput
+          style={styles.input}
+          value={eventId}
+          onChangeText={setEventId}
+          placeholder="EVT-2026-0001"
+          placeholderTextColor={COLORS.textSecondary}
+          autoCapitalize="characters"
+          editable={!editingCode}
+        />
 
-      <Text style={styles.label}>Venue</Text>
-      <TextInput
-        style={styles.input}
-        value={venue}
-        onChangeText={setVenue}
-        placeholder="Gymnasium / Room 301"
-        placeholderTextColor={COLORS.textSecondary}
-      />
+        <Text style={styles.label}>Venue</Text>
+        <TextInput
+          style={styles.input}
+          value={venue}
+          onChangeText={setVenue}
+          placeholder="Gymnasium / Room 301"
+          placeholderTextColor={COLORS.textSecondary}
+        />
 
-      <Text style={styles.label}>Description</Text>
-      <TextInput
-        style={[styles.input, styles.multiline]}
-        value={description}
-        onChangeText={setDescription}
-        placeholder="What is this event about?"
-        placeholderTextColor={COLORS.textSecondary}
-        multiline
-      />
+        <Text style={styles.label}>Description</Text>
+        <TextInput
+          style={[styles.input, styles.multiline]}
+          value={description}
+          onChangeText={setDescription}
+          placeholder="What is this event about?"
+          placeholderTextColor={COLORS.textSecondary}
+          multiline
+        />
 
-      <Text style={styles.label}>Start Time</Text>
-      <Pressable
-        style={styles.input}
-        onPress={() => {
-          setEditTarget('start');
-          setEditingPart('date');
-        }}
-      >
-        <Text style={styles.inputText}>{startDate.toLocaleString()}</Text>
-      </Pressable>
-
-      <Text style={styles.label}>End Time</Text>
-      <Pressable
-        style={styles.input}
-        onPress={() => {
-          setEditTarget('end');
-          setEditingPart('date');
-        }}
-      >
-        <Text style={styles.inputText}>{endDate.toLocaleString()}</Text>
-      </Pressable>
-
-      <View style={styles.chips}>
+        <Text style={styles.label}>Start Time</Text>
         <Pressable
-          style={styles.chip}
-          onPress={() => handleQuickDuration(30)}
+          style={styles.input}
+          onPress={() => {
+            setEditTarget('start');
+            setEditingPart('date');
+          }}
         >
-          <Text style={styles.chipText}>+30 min</Text>
+          <Text style={styles.inputText}>{startDate.toLocaleString()}</Text>
         </Pressable>
-        <Pressable
-          style={styles.chip}
-          onPress={() => handleQuickDuration(60)}
-        >
-          <Text style={styles.chipText}>+1 hour</Text>
-        </Pressable>
-        <Pressable
-          style={styles.chip}
-          onPress={() => handleQuickDuration(120)}
-        >
-          <Text style={styles.chipText}>+2 hours</Text>
-        </Pressable>
-      </View>
 
-      {editTarget && (
-        <DateTimePicker
-          value={editTarget === 'start' ? startDate : endDate}
-          mode={editingPart}
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={(_, selected) => {
-            if (Platform.OS === 'android') {
-              if (editingPart === 'date' && selected) {
-                const cur =
-                  editTarget === 'start' ? startDate : endDate;
-                const next = new Date(cur);
-                next.setFullYear(
-                  selected.getFullYear(),
-                  selected.getMonth(),
-                  selected.getDate()
-                );
-                if (editTarget === 'start') setStartDate(next);
-                else setEndDate(next);
-                setEditingPart('time');
-              } else {
-                if (selected) {
+        <Text style={styles.label}>End Time</Text>
+        <Pressable
+          style={styles.input}
+          onPress={() => {
+            setEditTarget('end');
+            setEditingPart('date');
+          }}
+        >
+          <Text style={styles.inputText}>{endDate.toLocaleString()}</Text>
+        </Pressable>
+
+        <View style={styles.chips}>
+          {[1, 2, 3, 4, 5].map((hours) => (
+            <Pressable
+              key={hours}
+              style={styles.chip}
+              onPress={() => handleQuickDuration(hours * 60)}
+            >
+              <Text style={styles.chipText}>
+                +{hours} {hours === 1 ? 'hour' : 'hours'}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {editTarget && (
+          <DateTimePicker
+            value={editTarget === 'start' ? startDate : endDate}
+            mode={editingPart}
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={(_, selected) => {
+              if (Platform.OS === 'android') {
+                if (editingPart === 'date' && selected) {
                   const cur =
                     editTarget === 'start' ? startDate : endDate;
                   const next = new Date(cur);
-                  next.setHours(
-                    selected.getHours(),
-                    selected.getMinutes()
+                  next.setFullYear(
+                    selected.getFullYear(),
+                    selected.getMonth(),
+                    selected.getDate()
                   );
                   if (editTarget === 'start') setStartDate(next);
                   else setEndDate(next);
+                  setEditingPart('time');
+                } else {
+                  if (selected) {
+                    const cur =
+                      editTarget === 'start' ? startDate : endDate;
+                    const next = new Date(cur);
+                    next.setHours(
+                      selected.getHours(),
+                      selected.getMinutes()
+                    );
+                    if (editTarget === 'start') setStartDate(next);
+                    else setEndDate(next);
+                  }
+                  setEditTarget(null);
+                  setEditingPart('date');
                 }
-                setEditTarget(null);
-                setEditingPart('date');
+              } else if (selected) {
+                if (editTarget === 'start') setStartDate(selected);
+                else setEndDate(selected);
               }
-            } else if (selected) {
-              if (editTarget === 'start') setStartDate(selected);
-              else setEndDate(selected);
-            }
-          }}
-        />
-      )}
-      {Platform.OS === 'ios' && editTarget && (
+            }}
+          />
+        )}
+        {Platform.OS === 'ios' && editTarget && (
+          <AppButton
+            title="Done"
+            icon="checkmark-outline"
+            onPress={() => setEditTarget(null)}
+          />
+        )}
+
+        {message && <Text style={styles.message}>{message}</Text>}
+
         <AppButton
-          title="Done"
-          icon="checkmark-outline"
-          onPress={() => setEditTarget(null)}
+          theme="primary"
+          title={editingCode ? 'Update Event' : 'Create Event'}
+          icon={editingCode ? 'save-outline' : 'add-outline'}
+          onPress={handleCreateEvent}
         />
-      )}
+        {editingCode && (
+          <AppButton
+            title="Cancel Edit"
+            icon="close-outline"
+            onPress={() => {
+              setEditingCode(null);
+              setTitle('');
+              setEventId('');
+              setVenue('');
+              setDescription('');
+            }}
+          />
+        )}
 
-      {message && <Text style={styles.message}>{message}</Text>}
-
-      <AppButton
-        theme="primary"
-        title={editingCode ? 'Update Event' : 'Create Event'}
-        icon={editingCode ? 'save-outline' : 'add-outline'}
-        onPress={handleCreateEvent}
-      />
-      {editingCode && (
-        <AppButton
-          title="Cancel Edit"
-          icon="close-outline"
-          onPress={() => {
-            setEditingCode(null);
-            setTitle('');
-            setEventId('');
-            setVenue('');
-            setDescription('');
-          }}
-        />
-      )}
-
-      {payload && (
-        <View style={styles.qrCard}>
-          <View style={styles.qrBox}>
-            <QRCode
-              value={payload}
-              size={260}
-              ecl="L"
-              color="#000000"
-              backgroundColor="#FFFFFF"
-            />
-          </View>
-          <Text style={styles.eventCodeText}>{eventId.trim()}</Text>
-          {qrExpiry && (
-            <Text style={styles.scanHint}>
-              Expires: {new Date(qrExpiry).toLocaleTimeString()}
-            </Text>
-          )}
-          <Text style={styles.scanHint}>
-            Smart QR — rotating & time-limited. Screenshots stop working after rotation.
-          </Text>
-          <View style={styles.row}>
-            <Pressable
-              style={styles.smallBtn}
-              onPress={() => refreshQr(eventId.trim(), 5)}
-            >
-              <Text style={styles.smallBtnText}>Rotate (5 min)</Text>
-            </Pressable>
-            <Pressable
-              style={styles.smallBtn}
-              onPress={() => refreshQr(eventId.trim(), 30)}
-            >
-              <Text style={styles.smallBtnText}>Rotate (30 min)</Text>
-            </Pressable>
-          </View>
-          <Text style={styles.payloadText}>{payload}</Text>
-        </View>
-      )}
-
-      <Text style={[styles.title, { marginTop: 20 }]}>My Events</Text>
-      {myEvents.length === 0 ? (
-        <Text style={styles.muted}>No events yet.</Text>
-      ) : (
-        myEvents.map((ev) => (
-          <View key={ev.id} style={styles.eventCard}>
-            <View style={styles.eventHeader}>
-              <Text style={styles.eventTitle}>{ev.title}</Text>
-              <Text
-                style={[
-                  styles.statusBadge,
-                  ev.status === 'closed' ? styles.closed : styles.open,
-                ]}
-              >
-                {ev.status}
+        {payload && (
+          <View style={styles.qrCard}>
+            <View style={styles.qrBox}>
+              <QRCode
+                value={payload}
+                size={260}
+                ecl="L"
+                color="#000000"
+                backgroundColor="#FFFFFF"
+              />
+            </View>
+            <Text style={styles.eventCodeText}>{eventId.trim()}</Text>
+            {qrExpiry && (
+              <Text style={styles.scanHint}>
+                Expires: {new Date(qrExpiry).toLocaleTimeString()}
               </Text>
-            </View>
-            <Text style={styles.cardMuted}>
-              {ev.event_code}
-              {ev.venue ? ` • ${ev.venue}` : ''}
+            )}
+            <Text style={styles.scanHint}>
+              Smart QR — rotating & time-limited. Screenshots stop working after rotation.
             </Text>
-            {ev.description ? (
-              <Text style={styles.cardMuted}>{ev.description}</Text>
-            ) : null}
-            <View style={styles.row}>
+            <View style={styles.qrActions}>
               <Pressable
                 style={styles.smallBtn}
-                onPress={() => handleEdit(ev.event_code)}
+                onPress={() => refreshQr(eventId.trim(), 60)}
               >
-                <Text style={styles.smallBtnText}>Edit</Text>
+                <Text style={styles.smallBtnText}>Rotate (1 hour)</Text>
               </Pressable>
               <Pressable
                 style={styles.smallBtn}
-                onPress={() => handleCloseToggle(ev)}
+                onPress={() => refreshQr(eventId.trim(), 120)}
               >
-                <Text style={styles.smallBtnText}>
-                  {ev.status === 'closed' ? 'Reopen' : 'Close'}
-                </Text>
+                <Text style={styles.smallBtnText}>Rotate (2 hours)</Text>
               </Pressable>
               <Pressable
                 style={styles.smallBtn}
-                onPress={() => {
-                  setEventId(ev.event_code);
-                  refreshQr(ev.event_code, 5);
-                }}
+                onPress={() => refreshQr(eventId.trim(), 180)}
               >
-                <Text style={styles.smallBtnText}>Show QR</Text>
+                <Text style={styles.smallBtnText}>Rotate (3 hours)</Text>
               </Pressable>
             </View>
+            <Text style={styles.payloadText}>{payload}</Text>
           </View>
-        ))
-      )}
-    </ScrollView>
+        )}
+
+        <Text style={[styles.title, { marginTop: 20 }]}>My Events</Text>
+        {myEvents.length === 0 ? (
+          <Text style={styles.muted}>No events yet.</Text>
+        ) : (
+          myEvents.map((ev) => (
+            <View key={ev.id} style={styles.eventCard}>
+              <View style={styles.eventHeader}>
+                <Text style={styles.eventTitle}>{ev.title}</Text>
+                <Text
+                  style={[
+                    styles.statusBadge,
+                    ev.status === 'closed' ? styles.closed : styles.open,
+                  ]}
+                >
+                  {ev.status}
+                </Text>
+              </View>
+              <Text style={styles.cardMuted}>
+                {ev.event_code}
+                {ev.venue ? ` • ${ev.venue}` : ''}
+              </Text>
+              {ev.description ? (
+                <Text style={styles.cardMuted}>{ev.description}</Text>
+              ) : null}
+              <View style={styles.row}>
+                <Pressable
+                  style={styles.smallBtn}
+                  onPress={() => handleEdit(ev.event_code)}
+                >
+                  <Text style={styles.smallBtnText}>Edit</Text>
+                </Pressable>
+                <Pressable
+                  style={styles.smallBtn}
+                  onPress={() => handleCloseToggle(ev)}
+                >
+                  <Text style={styles.smallBtnText}>
+                    {ev.status === 'closed' ? 'Reopen' : 'Close'}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  style={styles.smallBtn}
+                  onPress={() => {
+                    setEventId(ev.event_code);
+                    refreshQr(ev.event_code, 60);
+                  }}
+                >
+                  <Text style={styles.smallBtnText}>Show QR</Text>
+                </Pressable>
+              </View>
+            </View>
+          ))
+        )}
+      </ScrollView>
+    </BrandBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: 'transparent',
   },
   content: {
     padding: 20,
@@ -460,7 +470,7 @@ const styles = StyleSheet.create({
   },
   centered: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
@@ -499,6 +509,7 @@ const styles = StyleSheet.create({
   },
   chips: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     marginVertical: 12,
   },
@@ -534,6 +545,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 20,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -593,7 +606,7 @@ const styles = StyleSheet.create({
   },
   open: {
     backgroundColor: COLORS.success,
-    color: COLORS.textOnPrimary,
+    color: '#FFFFFF',
   },
   closed: {
     backgroundColor: COLORS.card,
@@ -605,6 +618,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     marginTop: 8,
+  },
+  qrActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+    alignSelf: 'stretch',
   },
   smallBtn: {
     backgroundColor: COLORS.background,

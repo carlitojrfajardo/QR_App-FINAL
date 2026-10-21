@@ -282,3 +282,26 @@
 - **Testing performed:** TypeScript type check (`npx tsc --noEmit`) — passed (docs only, no code). Confirmed each new guide's steps match the actual current code (e.g., `getEventByCode` reuse in Phase 9, `buildQRPayload`/`parseQRPayload` in Phase 8, count-only `getTeacherEventSummary` in Phase 10).
 - **Result:** Pass — Every Phase 3–10 document now has an ordered STEP-BY-STEP EXECUTION GUIDE; the Phase 3 RLS table reflects the full current schema; Phase 4 includes a forward-reference so students understand the intentional later refactors.
 - **Next step:** Phase 11 — Teacher role (RBAC completion): complete role-based access control across tabs (Teacher-only teacher/attendance; Student-only scanning) and centralize the role check.
+
+---
+
+### Phase 11 — Single Admin Lockdown (Database-Enforced)
+
+- **Date:** 2026-10-21
+- **Phase:** 11
+- **Module:** Role-Based Access Control — Administrator account
+- **Files changed:**
+  - `app/register.tsx` — removed the Student/Teacher/Admin role picker; registration now always creates a student account and shows a short note about admin promotion.
+  - `lib/auth.ts` — `SignUpProfile` no longer accepts a `role`; signup only writes `full_name`.
+  - `lib/profiles.ts` — added `AssignableRole` (`student | teacher`) and narrowed `updateUserRole` to it.
+  - `app/(tabs)/dashboard.tsx` — role buttons now only offer Student/Teacher; the admin row is read-only.
+  - `app/(tabs)/_layout.tsx` — the Scan tab is hidden for admin accounts.
+  - `app/(tabs)/index.tsx` — admins see an “Open Dashboard” CTA instead of “Scan QR Code”.
+  - `app/(tabs)/scan.tsx` — `/scan` redirects admins back to Home.
+  - `schema.sql` — signup insert policy forces `role = 'student'`; added `guard_profile_role` trigger, a partial unique index (`profiles_one_admin_idx`), and bootstrap instructions.
+  - `ADMIN_SETUP.md` — new setup/verification guide for the single admin.
+- **What changed:** Removed every UI path that let a user choose `admin` at signup or assign `admin` from the dashboard. Enforced the same rules in PostgreSQL so direct Supabase REST calls cannot bypass the UI: a non-admin cannot change roles, an admin cannot create a second admin, and the only admin cannot demote themselves. The unique index guarantees at most one admin row. The single admin is created manually via the Supabase Dashboard/SQL Editor. Admins also no longer see the scanner tab, Home CTA, or `/scan` route.
+- **Why it changed:** Previously `profiles.role` was writable by its owner through the `"Users can update their own profile"` policy, so any signed-in user could promote themselves to admin by calling Supabase directly. UI-only hiding was not a security boundary.
+- **Testing performed:** `npx tsc --noEmit` — passed. Reviewed the trigger logic against the three attack paths: self-promotion, second-admin creation, and last-admin demotion. SQL must be re-run in the Supabase SQL Editor; if more than one admin already exists, the index is skipped with a notice until extras are demoted.
+- **Result:** Pass — Registration and dashboard can no longer create an admin; the database rejects role escalation and enforces a single admin.
+- **Next step:** Re-run `schema.sql` in Supabase, then bootstrap/verify the one admin account. Optionally enable MFA for that admin.

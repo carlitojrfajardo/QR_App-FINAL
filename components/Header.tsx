@@ -12,8 +12,8 @@ export default function Header({ title }: Props) {
       <View style={styles.logoCircle}>
         <MaterialIcons
           name="qr-code-scanner"
-          size={36}
-          color={COLORS.primary}
+          size={24}
+          color={COLORS.textOnBackground}
         />
       </View>
       <Text style={styles.title}>{title}</Text>
@@ -23,23 +23,25 @@ export default function Header({ title }: Props) {
 
 const styles = StyleSheet.create({
   container: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
   logoCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: COLORS.card,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '800',
-    letterSpacing: 1,
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.2,
     color: COLORS.textOnBackground,
+    textAlign: 'left',
   },
 });

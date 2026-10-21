@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "QR Attendance App",
-    "slug": "qr-attendance-app",
+    "slug": "qrattendance",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "qrattendanceapp",
@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#060A13"
+      "backgroundColor": "#5EBFAE"
     },
     "ios": {
       "supportsTablet": true
@@ -19,7 +19,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#00FF9D"
+        "backgroundColor": "#5EBFAE"
       },
       "package": "com.school.qrattendance",
       "permissions": [
@@ -46,7 +46,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "bbe89c1d-6fa8-40e2-a8ee-28079d38f9c4"
+        "projectId": "7a977500-dfc6-4eab-b1f6-890e013b771c"
       }
     }
   }

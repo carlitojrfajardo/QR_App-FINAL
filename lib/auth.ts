@@ -44,7 +44,6 @@ export function useAuth(): AuthState {
 
 export type SignUpProfile = {
   full_name: string;
-  role: 'student' | 'teacher' | 'admin';
 };
 
 export async function signUp(
@@ -54,10 +53,12 @@ export async function signUp(
 ) {
   const { data, error } = await supabase.auth.signUp({ email, password });
   if (!error && data.session && profile) {
-    // Phase 3 trigger already created the profiles row — fill in name + role.
+    // The DB trigger already created the profiles row as 'student'.
+    // Only the name is filled in here — role changes are admin-only at
+    // the database level, so signup input can never grant admin access.
     await supabase
       .from('profiles')
-      .update({ full_name: profile.full_name, role: profile.role })
+      .update({ full_name: profile.full_name })
       .eq('id', data.session.user.id);
   }
   if (!error && data.session) {

@@ -51,16 +51,19 @@ export default function AppButton({
 
 const styles = StyleSheet.create({
   buttonInner: {
-    borderRadius: 10,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    borderRadius: 12,
+    minHeight: 52,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
     alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
     borderWidth: 1,
     borderColor: COLORS.border,
   },
   primaryFill: {
     backgroundColor: COLORS.primary,
-    borderColor: COLORS.outline,
+    borderColor: COLORS.border,
   },
   secondaryFill: {
     backgroundColor: COLORS.card,
@@ -72,8 +75,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   labelPrimary: {
     fontWeight: '700',

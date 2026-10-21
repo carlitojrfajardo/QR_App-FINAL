@@ -10,12 +10,12 @@ import {
   ActivityIndicator,
   TouchableWithoutFeedback,
   Keyboard,
-  Pressable,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AppButton from '@/components/AppButton';
+import BrandBackground from '@/components/BrandBackground';
 import Header from '@/components/Header';
 import { COLORS } from '@/constants/colors';
 import { signUp } from '@/lib/auth';
@@ -24,7 +24,6 @@ export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState<'student' | 'teacher' | 'admin'>('student');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -55,7 +54,6 @@ export default function RegisterScreen() {
     try {
       const { data, error: authError } = await signUp(email.trim(), password, {
         full_name: fullName.trim(),
-        role,
       });
 
       if (authError) {
@@ -73,7 +71,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <BrandBackground style={[styles.container, { paddingTop: insets.top }]}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -89,148 +87,111 @@ export default function RegisterScreen() {
               <Header title="QR Attendance" />
             </View>
 
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>
-              Register to start recording attendance
-            </Text>
+            {/* Minimal cardless auth layout */}
+            <View style={styles.titleBlock}>
+              <Text style={styles.eyebrow}>REGISTER</Text>
+              <Text style={styles.title}>Create account</Text>
+              <Text style={styles.subtitle}>
+                Register to start recording attendance
+              </Text>
+            </View>
+
+            <View style={styles.divider} />
 
             {success ? (
-              <View style={styles.successContainer}>
-                <Text style={styles.successTitle}>Check your email!</Text>
-                <Text style={styles.successText}>
-                  We sent a confirmation link to {email}. Click the link to
-                  verify your account, then come back and sign in.
-                </Text>
-                <Link href="/login" style={styles.link}>
-                  Back to Sign In
-                </Link>
-              </View>
-            ) : (
-              <View style={styles.form}>
-                <Text style={styles.label}>Full Name</Text>
-                <TextInput
-                  style={styles.input}
-                  value={fullName}
-                  onChangeText={setFullName}
-                  placeholder="Juan Dela Cruz"
-                  placeholderTextColor={COLORS.textSecondary}
-                  editable={!loading}
-                />
-
-                <Text style={styles.label}>I am a...</Text>
-                <View style={styles.roleRow}>
-                  <Pressable
-                    style={[
-                      styles.roleChip,
-                      role === 'student' && styles.roleChipActive,
-                    ]}
-                    onPress={() => setRole('student')}
-                  >
-                    <Text
-                      style={[
-                        styles.roleChipText,
-                        role === 'student' && styles.roleChipTextActive,
-                      ]}
-                    >
-                      Student
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    style={[
-                      styles.roleChip,
-                      role === 'teacher' && styles.roleChipActive,
-                    ]}
-                    onPress={() => setRole('teacher')}
-                  >
-                    <Text
-                      style={[
-                        styles.roleChipText,
-                        role === 'teacher' && styles.roleChipTextActive,
-                      ]}
-                    >
-                      Teacher
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    style={[
-                      styles.roleChip,
-                      role === 'admin' && styles.roleChipActive,
-                    ]}
-                    onPress={() => setRole('admin')}
-                  >
-                    <Text
-                      style={[
-                        styles.roleChipText,
-                        role === 'admin' && styles.roleChipTextActive,
-                      ]}
-                    >
-                      Admin
-                    </Text>
-                  </Pressable>
+                <View style={styles.successContainer}>
+                  <Text style={styles.successTitle}>Check your email!</Text>
+                  <Text style={styles.successText}>
+                    We sent a confirmation link to {email}. Click the link to
+                    verify your account, then come back and sign in.
+                  </Text>
+                  <Link href="/login" style={styles.link}>
+                    Back to Sign In
+                  </Link>
                 </View>
-
-                <Text style={styles.label}>Email</Text>
-                <TextInput
-                  style={styles.input}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="your.email@school.edu"
-                  placeholderTextColor={COLORS.textSecondary}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  editable={!loading}
-                />
-
-                <Text style={styles.label}>Password</Text>
-                <TextInput
-                  style={styles.input}
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="At least 6 characters"
-                  placeholderTextColor={COLORS.textSecondary}
-                  secureTextEntry
-                  editable={!loading}
-                />
-
-                <Text style={styles.label}>Confirm Password</Text>
-                <TextInput
-                  style={styles.input}
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  placeholder="Re-enter your password"
-                  placeholderTextColor={COLORS.textSecondary}
-                  secureTextEntry
-                  editable={!loading}
-                />
-
-                {error && <Text style={styles.error}>{error}</Text>}
-
-                {loading ? (
-                  <ActivityIndicator
-                    size="large"
-                    color={COLORS.textOnBackground}
-                    style={styles.loader}
+              ) : (
+                <View style={styles.form}>
+                  <Text style={styles.label}>Full Name</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={fullName}
+                    onChangeText={setFullName}
+                    placeholder="Juan Dela Cruz"
+                    placeholderTextColor={COLORS.mutedOnBackground}
+                    editable={!loading}
                   />
-                ) : (
-                  <AppButton
-                    theme="primary"
-                    title="Sign Up"
-                    icon="person-add-outline"
-                    onPress={handleRegister}
+
+                  <Text style={styles.roleHint}>
+                    New accounts start as students. Ask an administrator to
+                    promote you to teacher.
+                  </Text>
+
+                  <Text style={styles.label}>Email</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={email}
+                    onChangeText={setEmail}
+                    placeholder="your.email@school.edu"
+                    placeholderTextColor={COLORS.mutedOnBackground}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    editable={!loading}
                   />
-                )}
-              </View>
-            )}
+
+                  <Text style={styles.label}>Password</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder="At least 6 characters"
+                    placeholderTextColor={COLORS.mutedOnBackground}
+                    secureTextEntry
+                    editable={!loading}
+                  />
+
+                  <Text style={styles.label}>Confirm Password</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    placeholder="Re-enter your password"
+                    placeholderTextColor={COLORS.mutedOnBackground}
+                    secureTextEntry
+                    editable={!loading}
+                  />
+
+                  {error && <Text style={styles.error}>{error}</Text>}
+
+                  {loading ? (
+                    <ActivityIndicator
+                      size="large"
+                      color={COLORS.textOnBackground}
+                      style={styles.loader}
+                    />
+                  ) : (
+                    <View style={styles.buttonWrap}>
+                      <AppButton
+                        theme="primary"
+                        title="Sign Up"
+                        icon="person-add-outline"
+                        onPress={handleRegister}
+                      />
+                    </View>
+                  )}
+                </View>
+              )}
 
             {!success && (
-              <Link href="/login" style={styles.link}>
-                Already have an account? Sign In
-              </Link>
+              <View style={styles.footer}>
+                <Link href="/login" style={styles.link}>
+                  Already have an account? Sign In
+                </Link>
+              </View>
             )}
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
-    </View>
+    </BrandBackground>
   );
 }
 
@@ -245,104 +206,112 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingBottom: 32,
+    alignItems: 'stretch',
   },
   headerContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 16,
+    alignItems: 'flex-start',
+    marginTop: 24,
+    marginBottom: 28,
+  },
+  titleBlock: {
+    gap: 6,
+    marginBottom: 4,
+  },
+  eyebrow: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
+    color: COLORS.mutedOnBackground,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.track,
+    marginVertical: 20,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 30,
+    fontWeight: '800',
+    letterSpacing: -0.5,
     color: COLORS.textOnBackground,
     marginBottom: 4,
+    textAlign: 'left',
   },
   subtitle: {
     fontSize: 15,
-    lineHeight: 21,
+    lineHeight: 22,
     color: COLORS.mutedOnBackground,
-    marginBottom: 32,
+    textAlign: 'left',
   },
   form: {
-    marginBottom: 24,
     gap: 2,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.textOnBackground,
-    marginBottom: 6,
-    marginTop: 10,
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+    color: COLORS.textSecondary,
+    marginBottom: 8,
+    marginTop: 16,
+    textTransform: 'uppercase',
   },
   input: {
     backgroundColor: COLORS.card,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.border,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    minHeight: 52,
+    paddingVertical: 14,
     fontSize: 16,
-    color: COLORS.textPrimary,
+    color: COLORS.textOnBackground,
   },
-  roleRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  roleChip: {
-    flex: 1,
-    backgroundColor: COLORS.card,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 10,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  roleChipActive: {
-    borderColor: COLORS.outline,
-    backgroundColor: COLORS.primary,
-  },
-  roleChipText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
-  },
-  roleChipTextActive: {
-    fontWeight: '700',
-    color: COLORS.textOnPrimary,
+  roleHint: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: COLORS.mutedOnBackground,
+    marginTop: 16,
   },
   error: {
     fontSize: 14,
-    color: COLORS.textOnBackground,
+    color: COLORS.danger,
     marginTop: 12,
     marginBottom: 4,
+    textAlign: 'left',
   },
   loader: {
     marginVertical: 16,
   },
+  buttonWrap: {
+    marginTop: 24,
+  },
+  footer: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.track,
+    marginTop: 28,
+    paddingTop: 20,
+  },
   link: {
     fontSize: 14,
-    color: COLORS.textOnBackground,
+    color: COLORS.textPrimary,
     fontWeight: '600',
+    textAlign: 'center',
   },
   successContainer: {
     alignItems: 'center',
-    marginBottom: 24,
-    padding: 20,
-    backgroundColor: COLORS.card,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 10,
+    padding: 8,
+    gap: 8,
   },
   successTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
+    fontWeight: '800',
+    color: COLORS.textOnBackground,
     marginBottom: 8,
+    textAlign: 'center',
   },
   successText: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: COLORS.mutedOnBackground,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 16,
