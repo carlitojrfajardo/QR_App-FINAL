@@ -3,25 +3,29 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '@/constants/colors';
 import { useAuth } from '@/lib/auth';
-import { getProfile } from '@/lib/profiles';
+import { getProfile, type Role } from '@/lib/profiles';
 
 export default function TabLayout() {
   const { user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [role, setRole] = useState<Role | null>(null);
 
   useEffect(() => {
     let active = true;
     if (!user) {
-      setIsAdmin(false);
+      setRole(null);
       return;
     }
     getProfile(user.id).then((profile) => {
-      if (active) setIsAdmin(profile?.role === 'admin');
+      if (active) setRole(profile?.role ?? 'student');
     });
     return () => {
       active = false;
     };
   }, [user]);
+
+  const isAdmin = role === 'admin';
+  // Students only get Home, Scan, History, and Profile.
+  const isStudent = role === 'student';
 
   return (
     <Tabs
@@ -72,6 +76,8 @@ export default function TabLayout() {
         name="teacher"
         options={{
           title: 'Teacher',
+          // Students don't create events, so hide the Teacher tab for them.
+          href: isStudent ? null : undefined,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="clipboard" size={size} color={color} />
           ),
@@ -81,6 +87,8 @@ export default function TabLayout() {
         name="dashboard"
         options={{
           title: 'Dashboard',
+          // Dashboard is for teachers and admins only.
+          href: isStudent ? null : undefined,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="stats-chart" size={size} color={color} />
           ),

@@ -83,3 +83,31 @@ export async function signOut() {
   supabase.auth.signOut().catch(() => {});
   return { error: null };
 }
+
+/**
+ * Changes the password of the currently signed-in account.
+ * The current password is verified first so a stale/borrowed session
+ * cannot silently lock the real owner out of the account.
+ */
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+) {
+  const email = globalUser?.email;
+  if (!email) {
+    return {
+      error: new Error('You must be signed in to change your password.'),
+    };
+  }
+
+  const { error: verifyError } = await supabase.auth.signInWithPassword({
+    email,
+    password: currentPassword,
+  });
+  if (verifyError) {
+    return { error: new Error('Your current password is incorrect.') };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  return { error };
+}

@@ -1,6 +1,9 @@
 import { useCallback, useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,7 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AppButton from '@/components/AppButton';
 import BrandBackground from '@/components/BrandBackground';
 import { COLORS } from '@/constants/colors';
-import { useAuth, signOut } from '@/lib/auth';
+import { useAuth, signOut, changePassword } from '@/lib/auth';
 import { getProfile, updateProfile, type Profile } from '@/lib/profiles';
 
 export default function ProfileScreen() {
@@ -26,6 +29,15 @@ export default function ProfileScreen() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  // Change-password modal state
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPasswords, setShowPasswords] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const loadProfile = useCallback(async () => {
     if (!user) return;
@@ -67,6 +79,59 @@ export default function ProfileScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetPasswordForm = () => {
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordError(null);
+    setShowPasswords(false);
+  };
+
+  const closePasswordModal = () => {
+    if (changingPassword) return;
+    setPasswordModalOpen(false);
+    resetPasswordForm();
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordError(null);
+
+    if (!currentPassword) {
+      setPasswordError('Enter your current password.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('The new passwords do not match.');
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setPasswordError(
+        'New password must be different from your current password.'
+      );
+      return;
+    }
+
+    setChangingPassword(true);
+    const { error } = await changePassword(currentPassword, newPassword);
+    setChangingPassword(false);
+
+    if (error) {
+      setPasswordError(error.message);
+      return;
+    }
+
+    setPasswordModalOpen(false);
+    resetPasswordForm();
+    Alert.alert(
+      'Password updated',
+      'Your password has been changed successfully.'
+    );
   };
 
   const displayName =
@@ -168,6 +233,15 @@ export default function ProfileScreen() {
         </View>
 
         <AppButton
+          title="Change Password"
+          icon="lock-closed-outline"
+          onPress={() => {
+            resetPasswordForm();
+            setPasswordModalOpen(true);
+          }}
+        />
+
+        <AppButton
           title="Sign Out"
           icon="log-out-outline"
           onPress={handleSignOut}
@@ -175,6 +249,124 @@ export default function ProfileScreen() {
         />
         <Text style={styles.footer}>QR Attendance • v1.0.0</Text>
       </ScrollView>
+
+      {/* Change password modal */}
+      <Modal
+        visible={passwordModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={closePasswordModal}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalBackdrop}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <Pressable style={StyleSheet.absoluteFill} onPress={closePasswordModal} />
+
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalTitleRow}>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={20}
+                  color={COLORS.textPrimary}
+                />
+                <Text style={styles.modalTitle}>Change Password</Text>
+              </View>
+              <Pressable onPress={closePasswordModal} hitSlop={10}>
+                <Ionicons
+                  name="close"
+                  size={22}
+                  color={COLORS.textSecondary}
+                />
+              </Pressable>
+            </View>
+
+            <ScrollView
+              contentContainerStyle={styles.modalBody}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <Text style={styles.label}>Current password</Text>
+              <TextInput
+                style={styles.passwordInput}
+                value={currentPassword}
+                onChangeText={setCurrentPassword}
+                placeholder="Enter your current password"
+                placeholderTextColor={COLORS.textSecondary}
+                secureTextEntry={!showPasswords}
+                autoCapitalize="none"
+                editable={!changingPassword}
+              />
+
+              <Text style={styles.label}>New password</Text>
+              <TextInput
+                style={styles.passwordInput}
+                value={newPassword}
+                onChangeText={setNewPassword}
+                placeholder="At least 6 characters"
+                placeholderTextColor={COLORS.textSecondary}
+                secureTextEntry={!showPasswords}
+                autoCapitalize="none"
+                editable={!changingPassword}
+              />
+
+              <Text style={styles.label}>Confirm new password</Text>
+              <TextInput
+                style={styles.passwordInput}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="Re-type your new password"
+                placeholderTextColor={COLORS.textSecondary}
+                secureTextEntry={!showPasswords}
+                autoCapitalize="none"
+                editable={!changingPassword}
+              />
+
+              <Pressable
+                style={styles.showPasswordsRow}
+                onPress={() => setShowPasswords((v) => !v)}
+              >
+                <Ionicons
+                  name={showPasswords ? 'eye-off-outline' : 'eye-outline'}
+                  size={16}
+                  color={COLORS.textSecondary}
+                />
+                <Text style={styles.showPasswordsText}>
+                  {showPasswords ? 'Hide passwords' : 'Show passwords'}
+                </Text>
+              </Pressable>
+
+              {passwordError && (
+                <Text style={styles.passwordError}>{passwordError}</Text>
+              )}
+
+              <View style={styles.modalActions}>
+                <Pressable
+                  style={[styles.modalBtn, styles.modalCancelBtn]}
+                  onPress={closePasswordModal}
+                  disabled={changingPassword}
+                >
+                  <Text style={styles.modalCancelText}>Cancel</Text>
+                </Pressable>
+                <Pressable
+                  style={[
+                    styles.modalBtn,
+                    styles.modalSaveBtn,
+                    changingPassword && styles.modalBtnDisabled,
+                  ]}
+                  onPress={handleChangePassword}
+                  disabled={changingPassword}
+                >
+                  <Text style={styles.modalSaveText}>
+                    {changingPassword ? 'Updating...' : 'Update Password'}
+                  </Text>
+                </Pressable>
+              </View>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </BrandBackground>
   );
 }
@@ -338,5 +530,103 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: COLORS.mutedOnBackground,
     textAlign: 'center',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 45, 70, 0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 420,
+    maxHeight: '85%',
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 16,
+    padding: 18,
+    gap: 4,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  modalTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+  },
+  modalBody: {
+    paddingBottom: 4,
+  },
+  passwordInput: {
+    backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: COLORS.textPrimary,
+  },
+  showPasswordsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 14,
+    alignSelf: 'flex-start',
+  },
+  showPasswordsText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.textSecondary,
+  },
+  passwordError: {
+    marginTop: 12,
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.danger,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 18,
+  },
+  modalBtn: {
+    flex: 1,
+    minHeight: 48,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  modalCancelBtn: {
+    backgroundColor: COLORS.surface,
+  },
+  modalCancelText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  modalSaveBtn: {
+    backgroundColor: COLORS.primary,
+  },
+  modalSaveText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.textOnPrimary,
+  },
+  modalBtnDisabled: {
+    opacity: 0.6,
   },
 });
